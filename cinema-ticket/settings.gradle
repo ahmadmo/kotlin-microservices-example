@@ -1,0 +1,5 @@
+rootProject.name = 'cinema-ticket'
+
+include 'common'
+include 'customer'
+include 'ticket'

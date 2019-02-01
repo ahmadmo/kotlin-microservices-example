@@ -1,0 +1,55 @@
+buildscript {
+    ext {
+        kotlinVersion = '1.3.20'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
+    }
+}
+
+allprojects {
+
+    apply plugin: 'kotlin'
+    apply plugin: 'idea'
+
+    group = 'mo.ahmad'
+    version = '1.0'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+        compile "com.typesafe:config:1.3.3"
+        compile "mysql:mysql-connector-java:8.0.14"
+        compile "com.zaxxer:HikariCP:3.3.0"
+        compile "org.jetbrains.exposed:exposed:0.12.1"
+        compile "com.fasterxml.jackson.core:jackson-core:2.9.8"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.8"
+        compile "io.vertx:vertx-core:3.6.3"
+        compile "io.vertx:vertx-web:3.6.3"
+        compile "org.apache.logging.log4j:log4j-core:2.11.1"
+        compile "org.apache.logging.log4j:log4j-api:2.11.1"
+        compile "org.apache.logging.log4j:log4j-slf4j-impl:2.11.1"
+        compile "io.github.microutils:kotlin-logging:1.6.22"
+    }
+
+    compileKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+    compileTestKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+}

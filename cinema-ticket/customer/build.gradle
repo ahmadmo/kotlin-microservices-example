@@ -1,0 +1,7 @@
+apply plugin: 'application'
+mainClassName = 'customer.AppKt'
+
+dependencies {
+    compile project(":common")
+    compile "io.vertx:vertx-web-client:3.6.3"
+}
