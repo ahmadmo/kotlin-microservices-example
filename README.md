@@ -1,2 +1,2 @@
 # kotlin-microservices-example
-A Simple Microservices project written in Kotlin
+A collection of simple Microservices projects written in Kotlin
