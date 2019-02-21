@@ -5,6 +5,8 @@
 build/
 out/
 gradle/
+libs/
+tmp/
 
 # Compiled class file
 *.class

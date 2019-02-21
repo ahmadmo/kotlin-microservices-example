@@ -1,0 +1,30 @@
+node:
+  id: 1
+
+logging:
+  level:
+    account: DEBUG
+    org:
+      hibernate:
+        SQL: DEBUG
+
+server:
+  port: 18003
+
+spring:
+  application:
+    name: payment-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://mysql-host:3306/payment?useSSL=false
+    username: root
+    password: root
+  cloud:
+    zookeeper:
+      connect-string: zoo1:2181,zoo2:2181
+
+feign:
+  hystrix:
+    enabled: true

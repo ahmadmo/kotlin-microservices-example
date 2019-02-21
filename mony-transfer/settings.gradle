@@ -1,0 +1,12 @@
+pluginManagement {
+	repositories {
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'money-transfer'
+
+include 'transaction'
+include 'account'
+include 'payment'
+include 'edge'

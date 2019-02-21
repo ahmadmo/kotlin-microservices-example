@@ -1,0 +1,35 @@
+logging:
+  level:
+    edge: DEBUG
+
+server:
+  port: 18000
+
+spring:
+  application:
+    name: edge-service
+  cloud:
+    zookeeper:
+      connect-string: zoo1:2181,zoo2:2181
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: account-service
+          uri: lb://account-service
+          predicates:
+            - Path=/accounts,/accounts/{id:\d+}
+          filters:
+            - Hystrix=accounts-cmd
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payments
+            - Method=GET
+          filters:
+            - Hystrix=payments-cmd
+
+feign:
+  hystrix:
+    enabled: true

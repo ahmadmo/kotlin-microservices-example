@@ -1,0 +1,23 @@
+logging:
+  level:
+    transaction: DEBUG
+    org:
+      hibernate:
+        SQL: DEBUG
+
+server:
+  port: 18001
+
+spring:
+  application:
+    name: transaction-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://mysql-host:3306/transaction?useSSL=false
+    username: root
+    password: root
+  cloud:
+    zookeeper:
+      connect-string: zoo1:2181,zoo2:2181
