@@ -11,3 +11,6 @@ And to stop them, execute:
 ```bash
 ./stop-all.sh
 ```
+
+### Zookeeper
+You need a running **zookeeper** cluster to be able to run this example.
