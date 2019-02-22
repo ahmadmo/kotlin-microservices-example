@@ -4,7 +4,6 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
 import javax.persistence.EntityNotFoundException
 
 @Service
@@ -17,17 +16,13 @@ class PaymentService(private val pendingPaymentRepo: PendingPaymentRepository,
     }
 
     @Transactional
-    @Throws(EntityNotFoundException::class)
-    fun abort(transactionId: Long) {
-        val pendingPayment = pendingPaymentRepo.findByIdOrNull(transactionId) ?: throw EntityNotFoundException()
-        pendingPaymentRepo.delete(pendingPayment)
-    }
-
-    @Transactional
-    @Throws(EntityNotFoundException::class)
-    fun commit(transactionId: Long, createdAt: OffsetDateTime) {
-        val pendingPayment = pendingPaymentRepo.findByIdOrNull(transactionId) ?: throw EntityNotFoundException()
-        paymentRepo.save(pendingPayment.toPayment(createdAt))
+    @Throws(EntityNotFoundException::class, IllegalStateException::class)
+    fun resolve(transaction: TransactionsClient.Transaction) {
+        check(transaction.state != TransactionsClient.TransactionState.IN_PROGRESS)
+        val pendingPayment = pendingPaymentRepo.findByIdOrNull(transaction.id) ?: throw EntityNotFoundException()
+        if (transaction.state == TransactionsClient.TransactionState.COMMITTED) {
+            paymentRepo.save(pendingPayment.toPayment(transaction.createdAt))
+        }
         pendingPaymentRepo.delete(pendingPayment)
     }
 

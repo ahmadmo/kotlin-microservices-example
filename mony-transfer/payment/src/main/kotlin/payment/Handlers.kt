@@ -11,32 +11,26 @@ import reactor.core.publisher.Mono
 import java.nio.charset.StandardCharsets
 import javax.persistence.EntityNotFoundException
 
-object TransactionInProgressException : Exception()
-
 @Component
 class PaymentServiceHandler(private val service: PaymentService,
-                            private val transactionsClient: TransactionsClient) {
+                            private val transactions: TransactionsClient) {
 
-    fun create(request: ServerRequest): Mono<ServerResponse> =
-            request.bodyToMono(CreatePayment::class.java)
-                    .map { (transactionId, fromAccount, toAccount, amount) ->
-                        service.create(transactionId, fromAccount, toAccount, amount)
-                    }
-                    .flatMap { ServerResponse.ok().build() }
+    fun create(request: ServerRequest): Mono<ServerResponse> = request
+            .bodyToMono(CreatePayment::class.java)
+            .map { (transactionId, fromAccount, toAccount, amount) ->
+                service.create(transactionId, fromAccount, toAccount, amount)
+            }
+            .flatMap { ServerResponse.ok().build() }
 
     fun resolve(request: ServerRequest): Mono<ServerResponse> = Mono
             .fromCallable {
                 val transactionId = request.pathVariable("id").toLong()
-                val transactions = transactionsClient.findByIds(listOf(transactionId))
+                val transactions = transactions.findByIds(listOf(transactionId))
                 val transaction = transactions.firstOrNull() ?: throw EntityNotFoundException()
-                when (transaction.state) {
-                    TransactionsClient.TransactionState.IN_PROGRESS ->
-                        throw TransactionInProgressException
-                    TransactionsClient.TransactionState.ABORTED ->
-                        service.abort(transactionId)
-                    TransactionsClient.TransactionState.COMMITTED ->
-                        service.commit(transactionId, transaction.createdAt)
+                if (transaction.state == TransactionsClient.TransactionState.IN_PROGRESS) {
+                    throw TransactionNotFinishedException
                 }
+                service.resolve(transaction)
             }
             .flatMap { ServerResponse.ok().build() }
             .handleErrors()
@@ -63,6 +57,6 @@ fun Mono<ServerResponse>.handleErrors(): Mono<ServerResponse> = this
         .onErrorResume(EntityNotFoundException::class.java) {
             ServerResponse.status(HttpStatus.NOT_FOUND).syncBody(it.message ?: "")
         }
-        .onErrorResume(TransactionInProgressException::class.java) {
-            ServerResponse.badRequest().syncBody("Transaction is in progress")
+        .onErrorResume(TransactionNotFinishedException::class.java) {
+            ServerResponse.badRequest().syncBody("Transaction Not Finished")
         }

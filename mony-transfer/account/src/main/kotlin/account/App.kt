@@ -15,5 +15,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 class AccountServiceApplication
 
 fun main(args: Array<String>) {
+    // TODO recover pending commands on startup
     runApplication<AccountServiceApplication>(*args)
 }

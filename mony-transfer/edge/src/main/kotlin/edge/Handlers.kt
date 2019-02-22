@@ -10,48 +10,54 @@ import reactor.core.publisher.Mono
 import java.nio.charset.StandardCharsets
 
 @Component
-class EdgeServiceHandler(private val transactionsClient: TransactionsClient,
-                         private val accountsClient: AccountsClient,
-                         private val paymentsClient: PaymentsClient) {
+class EdgeServiceHandler(private val transactions: TransactionsClient,
+                         private val accounts: AccountsClient,
+                         private val payments: PaymentsClient) {
 
-    fun debit(request: ServerRequest): Mono<ServerResponse> =
-            request.bodyToMono(Debit::class.java)
-                    .map { (accountId, amount) ->
-                        val transactionId = transactionsClient.begin().id
-                        accountsClient.createDebitCommand(AccountsClient.CreateDebitCommand(accountId, transactionId, amount))
-                        transactionsClient.commit(transactionId)
-                        accountsClient.applyCommands(listOf(AccountsClient.ApplyCommand(accountId, transactionId, amount)))
-                    }
-                    .flatMap { ServerResponse.ok().build() }
-                    .handleErrors()
+    // TODO transaction error handling
 
-    fun credit(request: ServerRequest): Mono<ServerResponse> =
-            request.bodyToMono(Credit::class.java)
-                    .map { (accountId, amount) ->
-                        val transactionId = transactionsClient.begin().id
-                        accountsClient.createCreditCommand(AccountsClient.CreateCreditCommand(accountId, transactionId))
-                        transactionsClient.commit(transactionId)
-                        accountsClient.applyCommands(listOf(AccountsClient.ApplyCommand(accountId, transactionId, amount)))
-                    }
-                    .flatMap { ServerResponse.ok().build() }
-                    .handleErrors()
+    fun debit(request: ServerRequest): Mono<ServerResponse> = request
+            .bodyToMono(Debit::class.java)
+            .map { (accountId, amount) ->
+                val transactionId = transactions.begin().id
+                accounts.createDebitCommand(AccountsClient.CreateDebitCommand(accountId, transactionId, amount))
+                payments.create(PaymentsClient.CreatePayment(transactionId, accountId, 0, amount))
+                transactions.commit(transactionId)
+                accounts.applyCommands(listOf(AccountsClient.ApplyCommand(accountId, transactionId, amount)))
+                payments.resolve(transactionId)
+            }
+            .flatMap { ServerResponse.ok().build() }
+            .handleErrors()
 
-    fun transfer(request: ServerRequest): Mono<ServerResponse> =
-            request.bodyToMono(TransferMoney::class.java)
-                    .map { (fromAccount, toAccount, amount) ->
-                        val transactionId = transactionsClient.begin().id
-                        accountsClient.createDebitCommand(AccountsClient.CreateDebitCommand(fromAccount, transactionId, amount))
-                        accountsClient.createCreditCommand(AccountsClient.CreateCreditCommand(toAccount, transactionId))
-                        paymentsClient.create(PaymentsClient.CreatePayment(transactionId, fromAccount, toAccount, amount))
-                        transactionsClient.commit(transactionId)
-                        accountsClient.applyCommands(listOf(
-                                AccountsClient.ApplyCommand(fromAccount, transactionId, amount),
-                                AccountsClient.ApplyCommand(toAccount, transactionId, amount)
-                        ))
-                        paymentsClient.resolve(transactionId)
-                    }
-                    .flatMap { ServerResponse.ok().build() }
-                    .handleErrors()
+    fun credit(request: ServerRequest): Mono<ServerResponse> = request
+            .bodyToMono(Credit::class.java)
+            .map { (accountId, amount) ->
+                val transactionId = transactions.begin().id
+                accounts.createCreditCommand(AccountsClient.CreateCreditCommand(accountId, transactionId))
+                payments.create(PaymentsClient.CreatePayment(transactionId, 0, accountId, amount))
+                transactions.commit(transactionId)
+                accounts.applyCommands(listOf(AccountsClient.ApplyCommand(accountId, transactionId, amount)))
+                payments.resolve(transactionId)
+            }
+            .flatMap { ServerResponse.ok().build() }
+            .handleErrors()
+
+    fun transfer(request: ServerRequest): Mono<ServerResponse> = request
+            .bodyToMono(TransferMoney::class.java)
+            .map { (fromAccount, toAccount, amount) ->
+                val transactionId = transactions.begin().id
+                accounts.createDebitCommand(AccountsClient.CreateDebitCommand(fromAccount, transactionId, amount))
+                accounts.createCreditCommand(AccountsClient.CreateCreditCommand(toAccount, transactionId))
+                payments.create(PaymentsClient.CreatePayment(transactionId, fromAccount, toAccount, amount))
+                transactions.commit(transactionId)
+                accounts.applyCommands(listOf(
+                        AccountsClient.ApplyCommand(fromAccount, transactionId, amount),
+                        AccountsClient.ApplyCommand(toAccount, transactionId, amount)
+                ))
+                payments.resolve(transactionId)
+            }
+            .flatMap { ServerResponse.ok().build() }
+            .handleErrors()
 }
 
 fun Mono<ServerResponse>.handleErrors(): Mono<ServerResponse> = this

@@ -1,6 +1,7 @@
 package account
 
 import org.hibernate.Hibernate
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -8,9 +9,6 @@ import java.time.OffsetDateTime
 import java.util.*
 import javax.persistence.EntityNotFoundException
 import kotlin.collections.HashMap
-
-object BusyAccountException : Exception()
-object NotEnoughBalanceException : Exception()
 
 @Service
 class AccountService(private val accountRepo: AccountRepository,
@@ -22,6 +20,12 @@ class AccountService(private val accountRepo: AccountRepository,
     @Transactional(readOnly = true)
     fun findAccountById(id: Int): Optional<Account> =
             accountRepo.findById(id).map { Hibernate.initialize(it.pendingCommands); it }
+
+    @Transactional(readOnly = true)
+    fun findAll(page: Int, size: Int): Iterable<Account> =
+            accountRepo.findAll(PageRequest.of(page, size)).content.apply {
+                forEach { Hibernate.initialize(it.pendingCommands) }
+            }
 
     fun deleteAccountById(id: Int) {
         accountRepo.deleteById(id)
@@ -63,7 +67,9 @@ class AccountService(private val accountRepo: AccountRepository,
             val account = accountRepo.findByIdOrNull(accountId) ?: throw EntityNotFoundException()
             for (cmd in commandGroup.distinctBy { it.transactionId }) {
                 val transaction = transactionMap[cmd.transactionId] ?: throw EntityNotFoundException()
-                account.applyCommand(transaction, cmd.amount)
+                if (transaction.state != TransactionsClient.TransactionState.IN_PROGRESS) {
+                    account.applyCommand(transaction, cmd.amount)
+                }
             }
             account.updatedAt = OffsetDateTime.now()
         }

@@ -19,6 +19,8 @@ data class Transaction(
         @Column(nullable = false)
         val createdAt: OffsetDateTime = OffsetDateTime.now(),
         var updatedAt: OffsetDateTime? = null,
+        @Column(nullable = false)
+        val nodeId: Int,
         @Version
         var version: Int = 0
 )

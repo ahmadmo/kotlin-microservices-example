@@ -15,5 +15,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 class PaymentServiceApplication
 
 fun main(args: Array<String>) {
+    // TODO recover pending payments on startup
     runApplication<PaymentServiceApplication>(*args)
 }

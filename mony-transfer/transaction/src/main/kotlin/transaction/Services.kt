@@ -6,10 +6,11 @@ import java.time.OffsetDateTime
 import javax.persistence.EntityNotFoundException
 
 @Service
-class TransactionService(private val repo: TransactionRepository) {
+class TransactionService(private val repo: TransactionRepository,
+                         private val nodeProps: NodeProperties) {
 
     fun begin(): Long =
-            repo.save(Transaction()).id
+            repo.save(Transaction(nodeId = nodeProps.id)).id
 
     fun findByIds(ids: List<Long>): Iterable<Transaction> =
             repo.findAllById(ids)

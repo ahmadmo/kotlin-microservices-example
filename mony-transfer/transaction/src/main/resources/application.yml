@@ -1,3 +1,6 @@
+node:
+  id: 1
+
 logging:
   level:
     transaction: DEBUG

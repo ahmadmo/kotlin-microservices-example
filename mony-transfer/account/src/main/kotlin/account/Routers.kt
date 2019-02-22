@@ -15,6 +15,7 @@ class AccountServiceRouter(private val handler: AccountServiceHandler) {
                 PUT("", handler::createAccount)
             }
             GET("/{id:\\d+}", handler::findAccountById)
+            GET("", handler::findAll)
             DELETE("/{id:\\d+}", handler::deleteAccountById)
             (accept(MediaType.APPLICATION_JSON) and "/commands").nest {
                 PUT("/debit", handler::createDebitCommand)
