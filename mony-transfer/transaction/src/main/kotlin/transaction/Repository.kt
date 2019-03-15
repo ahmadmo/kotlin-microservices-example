@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TransactionRepository : CrudRepository<Transaction, Long> {
 
-    fun findAllByNodeId(nodeId: Int): Iterable<Transaction>
+    fun findAllByStateAndNodeId(state: TransactionState, nodeId: Int): Iterable<Transaction>
 }

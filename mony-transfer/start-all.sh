@@ -17,7 +17,7 @@ if [[ ! -w ${LOG_DIR} ]]; then
 fi
 
 if [[ ! -f gradlew ]] || [[ ! -f gradle/wrapper/gradle-wrapper.jar ]]; then
-    error_exit "couldn't find gradle wrapper in directory"
+    error_exit "couldn't find gradle wrapper in current directory"
 fi
 
 PID_FILE="${PID_FILE:-./services.pid}"
@@ -40,6 +40,7 @@ function start_service() {
     else
         printf "\033[1;31m[FAILED]\033[0m\n"
     fi
+    printf "see logs = \033[1;33m$LOG_DIR/$1.out\033[0m\n\n"
 }
 
 start_service transaction

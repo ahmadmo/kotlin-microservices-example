@@ -7,10 +7,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableConfigurationProperties(NodeProperties::class)
+@EnableConfigurationProperties(NodeProperties::class, TransactionProperties::class)
 class TransactionServiceApplication
 
 fun main(args: Array<String>) {
-    // TODO recover pending transactions on startup
     runApplication<TransactionServiceApplication>(*args)
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import java.time.OffsetDateTime
 import javax.persistence.*
+import kotlin.math.abs
 
 @Entity
 data class Account(
@@ -13,23 +14,18 @@ data class Account(
         var name: String,
         @Column(nullable = false)
         var balance: Long = 0,
+        @OneToMany(mappedBy = "id.account", cascade = [CascadeType.ALL], orphanRemoval = true)
+        var commands: MutableList<Command> = mutableListOf(),
         @Column(nullable = false)
         val createdAt: OffsetDateTime = OffsetDateTime.now(),
         var updatedAt: OffsetDateTime? = null,
-        @OneToMany(mappedBy = "id.account", cascade = [CascadeType.ALL], orphanRemoval = true)
-        var pendingCommands: MutableList<Command> = mutableListOf(),
         @Version
         var version: Int = 0
 ) : Serializable
 
-enum class CommandType {
-    DEBIT,
-    CREDIT
-}
-
 @Embeddable
 data class CommandId(
-        @ManyToOne(optional = false)
+        @ManyToOne(fetch = FetchType.LAZY, optional = false)
         @JsonIgnore
         val account: Account,
         @Column(nullable = false)
@@ -40,13 +36,28 @@ data class CommandId(
 data class Command(
         @EmbeddedId
         val id: CommandId,
-        @Enumerated(EnumType.STRING)
         @Column(nullable = false)
-        val type: CommandType,
+        val amount: Long,
         @Column(nullable = false)
         val nodeId: Int
 ) : Serializable {
 
+    companion object {
+
+        fun debit(account: Account, transactionId: Long, amount: Long, nodeId: Int) =
+                Command(CommandId(account, transactionId), 0 - abs(amount), nodeId)
+
+        fun credit(account: Account, transactionId: Long, amount: Long, nodeId: Int) =
+                Command(CommandId(account, transactionId), abs(amount), nodeId)
+    }
+
+    init {
+        require(amount != 0L) { "Amount cannot be Zero" }
+    }
+
+    fun isDebit(): Boolean =
+            amount < 0
+
     override fun toString(): String =
-            "Command(transactionId=${id.transactionId}, type=$type, nodeId=$nodeId)"
+            "Command(transactionId=${id.transactionId}, amount=$amount, nodeId=$nodeId)"
 }

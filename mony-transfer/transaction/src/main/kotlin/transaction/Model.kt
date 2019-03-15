@@ -17,10 +17,10 @@ data class Transaction(
         @Column(nullable = false)
         var state: TransactionState = TransactionState.IN_PROGRESS,
         @Column(nullable = false)
+        val nodeId: Int,
+        @Column(nullable = false)
         val createdAt: OffsetDateTime = OffsetDateTime.now(),
         var updatedAt: OffsetDateTime? = null,
-        @Column(nullable = false)
-        val nodeId: Int,
         @Version
         var version: Int = 0
 )

@@ -1,9 +1,14 @@
 node:
   id: 1
 
+watcher:
+  linger: 3s
+  period: 5s
+  batch-size: 50
+
 logging:
   level:
-    account: DEBUG
+    payment: DEBUG
     org:
       hibernate:
         SQL: DEBUG

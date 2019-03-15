@@ -8,17 +8,26 @@ import reactor.core.publisher.Mono
 import java.net.URI
 
 @Component
-class TransactionServiceHandler(private val service: TransactionService) {
+class TransactionServiceHandler(private val service: TransactionService,
+                                private val watcher: TransactionWatcher,
+                                private val exceptionMapper: ExceptionResponseStatusMapper) {
 
     fun begin(request: ServerRequest): Mono<ServerResponse> = Mono
-            .fromCallable { service.begin() }
+            .fromCallable {
+                val transaction = service.begin()
+                watcher.watch(transaction)
+                transaction.id
+            }
             .flatMap { id ->
                 ServerResponse.created(URI("/transactions/$id")).syncBody(mapOf("id" to id))
             }
 
-    fun findByIds(request: ServerRequest): Mono<ServerResponse> = Mono
+    fun findAllById(request: ServerRequest): Mono<ServerResponse> = Mono
             .fromCallable {
-                service.findByIds(request.pathVariable("ids").split(',').map { it.toLong() })
+                val ids = request.pathVariable("ids").split(',')
+                        .asSequence().take(50).map { it.toLong() }
+                        .toList()
+                service.findAllById(ids)
             }
             .flatMap { transactions ->
                 ServerResponse.ok().json().syncBody(transactions)
@@ -32,10 +41,10 @@ class TransactionServiceHandler(private val service: TransactionService) {
 
     private fun changeState(request: ServerRequest, state: TransactionState): Mono<ServerResponse> = Mono
             .fromCallable {
-                service.changeState(request.pathVariable("id").toLong(), state)
+                val id = request.pathVariable("id").toLong()
+                service.changeState(id, state)
+                watcher.unwatch(id)
             }
             .flatMap { ServerResponse.ok().build() }
-            .onErrorResume(IllegalStateException::class.java) {
-                ServerResponse.badRequest().syncBody("Transaction must be in progress")
-            }
+            .onErrorMap(exceptionMapper::map)
 }

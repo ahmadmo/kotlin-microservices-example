@@ -1,6 +1,9 @@
 node:
   id: 1
 
+transaction:
+  timeout: 15s
+
 logging:
   level:
     transaction: DEBUG

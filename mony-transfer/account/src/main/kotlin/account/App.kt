@@ -11,10 +11,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 @EnableDiscoveryClient
 @EnableHystrix
 @EnableFeignClients
-@EnableConfigurationProperties(NodeProperties::class)
+@EnableConfigurationProperties(NodeProperties::class, WatcherProperties::class)
 class AccountServiceApplication
 
 fun main(args: Array<String>) {
-    // TODO recover pending commands on startup
     runApplication<AccountServiceApplication>(*args)
 }

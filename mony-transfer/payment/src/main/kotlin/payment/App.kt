@@ -11,10 +11,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 @EnableDiscoveryClient
 @EnableHystrix
 @EnableFeignClients
-@EnableConfigurationProperties(NodeProperties::class)
+@EnableConfigurationProperties(NodeProperties::class, WatcherProperties::class)
 class PaymentServiceApplication
 
 fun main(args: Array<String>) {
-    // TODO recover pending payments on startup
     runApplication<PaymentServiceApplication>(*args)
 }

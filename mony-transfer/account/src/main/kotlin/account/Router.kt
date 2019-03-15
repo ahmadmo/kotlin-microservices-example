@@ -20,7 +20,7 @@ class AccountServiceRouter(private val handler: AccountServiceHandler) {
             (accept(MediaType.APPLICATION_JSON) and "/commands").nest {
                 PUT("/debit", handler::createDebitCommand)
                 PUT("/credit", handler::createCreditCommand)
-                POST("", handler::applyCommands)
+                POST("/{id:\\d+}", handler::applyCommands)
             }
         }
     }
